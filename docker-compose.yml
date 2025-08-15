@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  image-enhancer:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - REPLICATE_API_KEY=${REPLICATE_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - ADMIN_KEY=${ADMIN_KEY:-dev-admin-key}
+    volumes:
+      - models_data:/app/models
+      - cache_data:/app/.next/cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/admin"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for caching (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+
+  # Optional: PostgreSQL for data persistence (uncomment if needed)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: image_enhancer
+  #     POSTGRES_USER: enhancer
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+volumes:
+  models_data:
+    driver: local
+  cache_data:
+    driver: local
+  # redis_data:
+  #   driver: local
+  # postgres_data:
+  #   driver: local
+
+networks:
+  default:
+    name: image-enhancer-network
